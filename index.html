@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健身打卡日历</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h1 {
+            color: #1a2a6c;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .calendar-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .calendar {
+            flex: 1;
+            min-width: 280px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-header h2 {
+            color: #1a2a6c;
+            font-size: 1.5rem;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .nav-btn {
+            background: #1a2a6c;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .nav-btn:hover, .nav-btn:active {
+            background: #0d1a4a;
+            transform: scale(1.05);
+        }
+        
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            position: relative;
+            background: #f8f9fa;
+            font-size: 0.9rem;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .day:hover, .day:active {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .day.other-month {
+            color: #aaa;
+            background: #f0f0f0;
+        }
+        
+        .day.today {
+            background: #1a2a6c;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .day.workout::after {
+            content: "💪";
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.7rem;
+        }
+        
+        .day.protein::after {
+            content: "🥛";
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            font-size: 0.7rem;
+        }
+        
+        .day.both::after {
+            content: "💪🥛";
+            position: absolute;
+            bottom: 2px;
+            font-size: 0.7rem;
+        }
+        
+        .stats {
+            flex: 1;
+            min-width: 280px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        
+        .stats h2 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stat-label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #1a2a6c;
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
+            border-radius: 4px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        .modal h3 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+            background: #f8f9fa;
+            color: #333;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            padding-left: 15px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .option-btn:hover, .option-btn:active {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .option-btn.workout {
+            border-left: 5px solid #1a2a6c;
+        }
+        
+        .option-btn.protein {
+            border-left: 5px solid #b21f1f;
+        }
+        
+        .option-btn.both {
+            border-left: 5px solid #fdbb2d;
+        }
+        
+        .option-btn.clear {
+            border-left: 5px solid #6c757d;
+        }
+        
+        .close-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .close-btn:hover, .close-btn:active {
+            background: #5a6268;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .workout-legend {
+            background: #1a2a6c;
+        }
+        
+        .protein-legend {
+            background: #b21f1f;
+        }
+        
+        .both-legend {
+            background: #fdbb2d;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .instructions h3 {
+            color: #1a2a6c;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .instructions p {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        /* 移动端特定优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .calendar-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .calendar, .stats {
+                min-width: 100%;
+            }
+            
+            .calendar-header h2 {
+                font-size: 1.3rem;
+            }
+            
+            .nav-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+            
+            .weekdays {
+                font-size: 0.85rem;
+            }
+            
+            .day {
+                font-size: 0.85rem;
+            }
+            
+            .stats h2 {
+                font-size: 1.3rem;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+            
+            .option-btn {
+                padding: 10px;
+                font-size: 0.95rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+            
+            .calendar-header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .weekdays {
+                font-size: 0.8rem;
+            }
+            
+            .day {
+                font-size: 0.8rem;
+            }
+            
+            .stats h2 {
+                font-size: 1.2rem;
+            }
+            
+            .stat-label, .stat-value {
+                font-size: 0.85rem;
+            }
+            
+            .option-btn {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* 防止移动端点击时出现蓝色高亮 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>健身打卡日历</h1>
+            <p class="subtitle">记录您的健身历程与营养摄入 - 点击已打卡日期可取消记录</p>
+        </header>
+        
+        <div class="calendar-container">
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button class="nav-btn" id="prev-month">&#8249;</button>
+                    <h2 id="current-month">2023年10月</h2>
+                    <button class="nav-btn" id="next-month">&#8250;</button>
+                </div>
+                
+                <div class="weekdays">
+                    <div>日</div>
+                    <div>一</div>
+                    <div>二</div>
+                    <div>三</div>
+                    <div>四</div>
+                    <div>五</div>
+                    <div>六</div>
+                </div>
+                
+                <div class="days" id="calendar-days">
+                    <!-- 日期将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color workout-legend"></div>
+                        <span>健身</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color protein-legend"></div>
+                        <span>蛋白粉</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color both-legend"></div>
+                        <span>两者都有</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <h2>本月统计</h2>
+                
+                <div class="stat-item">
+                    <div class="stat-label">健身天数</div>
+                    <div class="stat-value" id="workout-days">0 天</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" id="workout-progress" style="width: 0%"></div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">蛋白粉天数</div>
+                    <div class="stat-value" id="protein-days">0 天</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" id="protein-progress" style="width: 0%"></div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-label">连续打卡</div>
+                    <div class="stat-value" id="streak-days">0 天</div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" id="streak-progress" style="width: 0%"></div>
+                </div>
+                
+                <div class="instructions">
+                    <h3>使用说明</h3>
+                    <p>• 点击日期记录健身和蛋白粉摄入情况</p>
+                    <p>• 再次点击已打卡日期可以取消记录</p>
+                    <p>• 数据会自动保存，下次打开时仍然存在</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 打卡选项模态框 -->
+    <div class="modal" id="option-modal">
+        <div class="modal-content">
+            <h3 id="modal-date">选择打卡项目</h3>
+            <button class="option-btn workout" data-option="workout">💪 今日健身</button>
+            <button class="option-btn protein" data-option="protein">🥛 摄入蛋白粉</button>
+            <button class="option-btn both" data-option="both">💪🥛 两者都有</button>
+            <button class="option-btn clear" data-option="clear">❌ 清除记录</button>
+            <button class="close-btn" id="close-modal">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化变量
+        let currentDate = new Date();
+        let selectedDate = null;
+        let records = JSON.parse(localStorage.getItem('fitnessRecords')) || {};
+        
+        // DOM元素
+        const calendarDays = document.getElementById('calendar-days');
+        const currentMonthElement = document.getElementById('current-month');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const optionModal = document.getElementById('option-modal');
+        const modalDateElement = document.getElementById('modal-date');
+        const closeModalBtn = document.getElementById('close-modal');
+        const workoutDaysElement = document.getElementById('workout-days');
+        const proteinDaysElement = document.getElementById('protein-days');
+        const streakDaysElement = document.getElementById('streak-days');
+        const workoutProgress = document.getElementById('workout-progress');
+        const proteinProgress = document.getElementById('protein-progress');
+        const streakProgress = document.getElementById('streak-progress');
+        
+        // 月份名称
+        const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", 
+                           "七月", "八月", "九月", "十月", "十一月", "十二月"];
+        
+        // 初始化日历
+        function initCalendar() {
+            renderCalendar();
+            updateStats();
+            
+            // 添加事件监听器
+            prevMonthBtn.addEventListener('click', goToPreviousMonth);
+            nextMonthBtn.addEventListener('click', goToNextMonth);
+            closeModalBtn.addEventListener('click', closeModal);
+            
+            // 为选项按钮添加事件监听器
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const option = this.getAttribute('data-option');
+                    recordActivity(option);
+                });
+            });
+            
+            // 添加触摸事件支持
+            addTouchSupport();
+        }
+        
+        // 添加触摸事件支持
+        function addTouchSupport() {
+            // 防止双击缩放
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+            
+            // 防止下拉刷新
+            document.addEventListener('touchmove', function (event) {
+                if (event.scale !== 1) { event.preventDefault(); }
+            }, false);
+        }
+        
+        // 渲染日历
+        function renderCalendar() {
+            // 清空日历
+            calendarDays.innerHTML = '';
+            
+            // 更新当前月份显示
+            currentMonthElement.textContent = `${currentDate.getFullYear()}年${monthNames[currentDate.getMonth()]}`;
+            
+            // 获取当前月份的第一天和最后一天
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            
+            // 获取第一天是星期几 (0 = 星期日, 6 = 星期六)
+            const firstDayIndex = firstDay.getDay();
+            
+            // 获取上个月的最后几天
+            const prevLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
+            
+            // 添加上个月的日期
+            for (let i = firstDayIndex; i > 0; i--) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day', 'other-month');
+                dayElement.textContent = prevLastDay - i + 1;
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // 添加当前月份的日期
+            const today = new Date();
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day');
+                
+                // 检查是否为今天
+                if (currentDate.getFullYear() === today.getFullYear() && 
+                    currentDate.getMonth() === today.getMonth() && 
+                    i === today.getDate()) {
+                    dayElement.classList.add('today');
+                }
+                
+                dayElement.textContent = i;
+                
+                // 检查是否有记录
+                const dateKey = formatDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), i));
+                if (records[dateKey]) {
+                    if (records[dateKey].workout && records[dateKey].protein) {
+                        dayElement.classList.add('both');
+                    } else if (records[dateKey].workout) {
+                        dayElement.classList.add('workout');
+                    } else if (records[dateKey].protein) {
+                        dayElement.classList.add('protein');
+                    }
+                }
+                
+                // 添加点击事件
+                dayElement.addEventListener('click', () => {
+                    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
+                    const clickedDateKey = formatDate(clickedDate);
+                    
+                    // 如果该日期已经有记录，则直接清除记录
+                    if (records[clickedDateKey]) {
+                        delete records[clickedDateKey];
+                        localStorage.setItem('fitnessRecords', JSON.stringify(records));
+                        renderCalendar();
+                        updateStats();
+                    } else {
+                        // 如果没有记录，则打开模态框
+                        openModal(clickedDate);
+                    }
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // 计算需要添加的下个月日期数量
+            const totalCells = 42; // 6行x7列
+            const nextDays = totalCells - (firstDayIndex + lastDay.getDate());
+            
+            // 添加下个月的日期
+            for (let i = 1; i <= nextDays; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day', 'other-month');
+                dayElement.textContent = i;
+                calendarDays.appendChild(dayElement);
+            }
+        }
+        
+        // 转到上个月
+        function goToPreviousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+        
+        // 转到下个月
+        function goToNextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+        
+        // 打开模态框
+        function openModal(date) {
+            selectedDate = date;
+            modalDateElement.textContent = `记录 ${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+            optionModal.style.display = 'flex';
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            optionModal.style.display = 'none';
+        }
+        
+        // 记录活动
+        function recordActivity(option) {
+            const dateKey = formatDate(selectedDate);
+            
+            if (!records[dateKey]) {
+                records[dateKey] = { workout: false, protein: false };
+            }
+            
+            switch(option) {
+                case 'workout':
+                    records[dateKey].workout = true;
+                    records[dateKey].protein = false;
+                    break;
+                case 'protein':
+                    records[dateKey].workout = false;
+                    records[dateKey].protein = true;
+                    break;
+                case 'both':
+                    records[dateKey].workout = true;
+                    records[dateKey].protein = true;
+                    break;
+                case 'clear':
+                    delete records[dateKey];
+                    break;
+            }
+            
+            // 保存到localStorage
+            localStorage.setItem('fitnessRecords', JSON.stringify(records));
+            
+            // 更新UI
+            renderCalendar();
+            updateStats();
+            closeModal();
+        }
+        
+        // 格式化日期为YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth();
+            const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const today = new Date();
+            
+            let workoutDays = 0;
+            let proteinDays = 0;
+            let currentStreak = 0;
+            
+            // 计算本月数据
+            for (let i = 1; i <= lastDay; i++) {
+                const dateKey = formatDate(new Date(currentYear, currentMonth, i));
+                if (records[dateKey]) {
+                    if (records[dateKey].workout) workoutDays++;
+                    if (records[dateKey].protein) proteinDays++;
+                }
+            }
+            
+            // 计算连续打卡天数
+            const checkDate = new Date();
+            while (true) {
+                const dateKey = formatDate(checkDate);
+                if (records[dateKey] && (records[dateKey].workout || records[dateKey].protein)) {
+                    currentStreak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            
+            // 更新UI
+            workoutDaysElement.textContent = `${workoutDays} 天`;
+            proteinDaysElement.textContent = `${proteinDays} 天`;
+            streakDaysElement.textContent = `${currentStreak} 天`;
+            
+            // 计算进度（假设目标是每周健身3次，蛋白粉5次）
+            const workoutGoal = Math.ceil(lastDay / 7) * 3;
+            const proteinGoal = Math.ceil(lastDay / 7) * 5;
+            
+            // 更新进度条
+            workoutProgress.style.width = `${Math.min(100, (workoutDays / workoutGoal) * 100)}%`;
+            proteinProgress.style.width = `${Math.min(100, (proteinDays / proteinGoal) * 100)}%`;
+            streakProgress.style.width = `${Math.min(100, (currentStreak / 30) * 100)}%`;
+        }
+        
+        // 初始化应用
+        initCalendar();
+    </script>
+</body>
+</html>
